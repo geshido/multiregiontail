@@ -16,7 +16,7 @@ Usage of multiregiontail:
   -group string
     	log group name
   -profile string
-    	regs, comma separated (default "default")
+    	AWS profile to use for credentials (default "default")
   -regs string
     	regs, comma separated
 ``` 
