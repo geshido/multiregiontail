@@ -1,6 +1,8 @@
 Multi-region tail
 ===
 
+![logo](logo.svg)
+
 A tool for tailing CloudWatch logs of different regions at once
 
 Install
