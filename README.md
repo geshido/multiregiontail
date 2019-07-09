@@ -1,7 +1,7 @@
 Multi-region tail
 ===
 
-![logo](logo.svg)
+![logo](https://raw.githubusercontent.com/geshido/multiregiontail/master/logo.svg)
 
 A tool for tailing CloudWatch logs of different regions at once
 
