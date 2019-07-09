@@ -40,7 +40,7 @@ var allRegions = strings.Join([]string{
 func main() {
 	var regs, profile, logGroup string
 	flag.StringVar(&regs, "regs", "", "regs, comma separated")
-	flag.StringVar(&profile, "profile", "default", "regs, comma separated")
+	flag.StringVar(&profile, "profile", "default", "AWS profile to use for credentials")
 	flag.StringVar(&logGroup, "group", "", "log group name")
 	flag.Parse()
 
