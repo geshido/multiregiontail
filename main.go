@@ -56,7 +56,7 @@ func main() {
 
 	regions := strings.Split(regs, ",")
 
-	logs := make(chan LogItem)
+	logs := make(chan LogItem, 100)
 	wg := sync.WaitGroup{}
 	wg.Add(len(regions))
 
@@ -116,6 +116,7 @@ func main() {
 		}(region, logs)
 	}
 
+	done := make(chan struct{})
 	go func(logs <-chan LogItem) {
 		if rlimit > 0 {
 			ticker := time.Tick(time.Duration(rlimit) * time.Second)
@@ -127,6 +128,8 @@ func main() {
 					case item := <-logs:
 						fmt.Printf("%s: %s\n", item.Time.Format(time.RFC3339), item.Message)
 					}
+				case <-done:
+					return
 				}
 			}
 		} else {
@@ -139,6 +142,7 @@ func main() {
 
 	wg.Wait()
 	close(logs)
+	close(done)
 	time.Sleep(time.Second)
 }
 
