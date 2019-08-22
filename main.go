@@ -14,6 +14,7 @@ import (
 )
 
 type LogItem struct {
+	Region  string
 	Message string
 	Time    time.Time
 }
@@ -43,7 +44,7 @@ func main() {
 	flag.StringVar(&regs, "regs", "", "regs, comma separated")
 	flag.StringVar(&profile, "profile", "default", "AWS profile to use for credentials")
 	flag.StringVar(&logGroup, "group", "", "log group name")
-	flag.IntVar(&rlimit, "rlimit", 0, "if provided, log items will be printed each <rlimit> seconds")
+	flag.IntVar(&rlimit, "rlimit", 0, "if provided, log items will be printed each <rlimit> ms")
 	flag.Parse()
 
 	if logGroup == "" {
@@ -102,6 +103,7 @@ func main() {
 					eventTime := millisToTime(*event.Timestamp)
 
 					logs <- LogItem{
+						Region:  reg,
 						Message: strings.TrimSpace(*event.Message),
 						Time:    eventTime,
 					}
@@ -119,14 +121,14 @@ func main() {
 	done := make(chan struct{})
 	go func(logs <-chan LogItem) {
 		if rlimit > 0 {
-			ticker := time.Tick(time.Duration(rlimit) * time.Second)
+			ticker := time.Tick(time.Duration(rlimit) * time.Millisecond)
 
 			for {
 				select {
 				case <-ticker:
 					select {
 					case item := <-logs:
-						fmt.Printf("%s: %s\n", item.Time.Format(time.RFC3339), item.Message)
+						logItem(item)
 					}
 				case <-done:
 					return
@@ -134,7 +136,7 @@ func main() {
 			}
 		} else {
 			for item := range logs {
-				fmt.Printf("%s: %s\n", item.Time.Format(time.RFC3339), item.Message)
+				logItem(item)
 			}
 		}
 
@@ -144,6 +146,10 @@ func main() {
 	close(logs)
 	close(done)
 	time.Sleep(time.Second)
+}
+
+func logItem(item LogItem) {
+	fmt.Printf("[%15s] %s: %s\n", item.Region, item.Time.Format(time.RFC3339), item.Message)
 }
 
 func timeToMillis(t time.Time) int64 {
