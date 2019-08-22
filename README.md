@@ -19,4 +19,6 @@ Usage of multiregiontail:
     	AWS profile to use for credentials (default "default")
   -regs string
     	regs, comma separated
+  -rlimit int
+    	if provided, log items will be printed each <rlimit> seconds
 ``` 

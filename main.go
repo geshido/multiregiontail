@@ -39,9 +39,11 @@ var allRegions = strings.Join([]string{
 
 func main() {
 	var regs, profile, logGroup string
+	var rlimit int
 	flag.StringVar(&regs, "regs", "", "regs, comma separated")
 	flag.StringVar(&profile, "profile", "default", "AWS profile to use for credentials")
 	flag.StringVar(&logGroup, "group", "", "log group name")
+	flag.IntVar(&rlimit, "rlimit", 0, "if provided, log items will be printed each <rlimit> seconds")
 	flag.Parse()
 
 	if logGroup == "" {
@@ -115,9 +117,24 @@ func main() {
 	}
 
 	go func(logs <-chan LogItem) {
-		for item := range logs {
-			fmt.Printf("%s: %s\n", item.Time.Format(time.RFC3339), item.Message)
+		if rlimit > 0 {
+			ticker := time.Tick(time.Duration(rlimit) * time.Second)
+
+			for {
+				select {
+				case <-ticker:
+					select {
+					case item := <-logs:
+						fmt.Printf("%s: %s\n", item.Time.Format(time.RFC3339), item.Message)
+					}
+				}
+			}
+		} else {
+			for item := range logs {
+				fmt.Printf("%s: %s\n", item.Time.Format(time.RFC3339), item.Message)
+			}
 		}
+
 	}(logs)
 
 	wg.Wait()
