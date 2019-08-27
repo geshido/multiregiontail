@@ -39,11 +39,12 @@ var allRegions = strings.Join([]string{
 }, ",")
 
 func main() {
-	var regs, profile, logGroup string
+	var regs, profile, logGroup, filter string
 	var rlimit int
 	flag.StringVar(&regs, "regs", "", "regs, comma separated")
 	flag.StringVar(&profile, "profile", "default", "AWS profile to use for credentials")
 	flag.StringVar(&logGroup, "group", "", "log group name")
+	flag.StringVar(&filter, "filter", "", "filter events as described at https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html")
 	flag.IntVar(&rlimit, "rlimit", 0, "if provided, log items will be printed each <rlimit> ms")
 	flag.Parse()
 
@@ -80,6 +81,9 @@ func main() {
 				input := cloudwatchlogs.FilterLogEventsInput{
 					LogGroupName: aws.String(logGroup),
 					StartTime:    aws.Int64(timeToMillis(startTime)),
+				}
+				if filter != "" {
+					input.FilterPattern = aws.String(filter)
 				}
 				out, err := cw.FilterLogEvents(&input)
 				if err != nil {
