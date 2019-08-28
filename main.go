@@ -57,23 +57,21 @@ func main() {
 	}
 
 	regions := strings.Split(regs, ",")
+	sess, err := session.NewSessionWithOptions(session.Options{
+		Profile: profile,
+	})
+	if err != nil {
+		log.Panicf("can not create session: %v", err)
+	}
 
 	logs := make(chan LogItem, 100)
 	wg := sync.WaitGroup{}
 	wg.Add(len(regions))
 
 	for _, region := range regions {
-		go func(reg string, logs chan<- LogItem) {
+		go func(reg string) {
 			defer wg.Done()
-			sess, err := session.NewSessionWithOptions(session.Options{
-				Profile: profile,
-			})
-			if err != nil {
-				log.Printf("%s: can not create session: %v", reg, err)
-				return
-			}
-			sess.Config.Region = aws.String(reg)
-			cw := cloudwatchlogs.New(sess)
+			cw := cloudwatchlogs.New(sess, aws.NewConfig().WithRegion(reg))
 
 			startTime := time.Now()
 			var seenIds []string
@@ -85,13 +83,20 @@ func main() {
 				if filter != "" {
 					input.FilterPattern = aws.String(filter)
 				}
-				out, err := cw.FilterLogEvents(&input)
+
+				var events []*cloudwatchlogs.FilteredLogEvent
+				err := cw.FilterLogEventsPages(&input, func(out *cloudwatchlogs.FilterLogEventsOutput, lastPage bool) bool {
+					for _, e := range out.Events {
+						events = append(events, e)
+					}
+					return true
+				})
 				if err != nil {
 					log.Printf("%s: can not get events: %v", reg, err)
 					return
 				}
 
-				for _, event := range out.Events {
+				for _, event := range events {
 					seen := false
 					for _, id := range seenIds {
 						if id == *event.EventId {
@@ -119,11 +124,11 @@ func main() {
 
 				time.Sleep(2 * time.Second)
 			}
-		}(region, logs)
+		}(region)
 	}
 
 	done := make(chan struct{})
-	go func(logs <-chan LogItem) {
+	go func() {
 		if rlimit > 0 {
 			ticker := time.Tick(time.Duration(rlimit) * time.Millisecond)
 
@@ -144,7 +149,7 @@ func main() {
 			}
 		}
 
-	}(logs)
+	}()
 
 	wg.Wait()
 	close(logs)
@@ -153,7 +158,7 @@ func main() {
 }
 
 func logItem(item LogItem) {
-	fmt.Printf("[%15s] %s: %s\n", item.Region, item.Time.Format(time.RFC3339), item.Message)
+	fmt.Printf("[%20s] %s: %s\n", item.Region, item.Time.Format(time.RFC3339), item.Message)
 }
 
 func timeToMillis(t time.Time) int64 {
