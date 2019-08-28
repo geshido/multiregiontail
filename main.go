@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"log"
@@ -19,25 +20,6 @@ type LogItem struct {
 	Time    time.Time
 }
 
-var allRegions = strings.Join([]string{
-	"eu-north-1",
-	"ap-south-1",
-	"eu-west-3",
-	"eu-west-2",
-	"eu-west-1",
-	"ap-northeast-2",
-	"ap-northeast-1",
-	"sa-east-1",
-	"ca-central-1",
-	"ap-southeast-1",
-	"ap-southeast-2",
-	"eu-central-1",
-	"us-east-1",
-	"us-east-2",
-	"us-west-1",
-	"us-west-2",
-}, ",")
-
 func main() {
 	var regs, profile, logGroup, filter string
 	var rlimit int
@@ -52,11 +34,16 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
+
+	var regions []string
 	if regs == "" {
-		regs = allRegions
+		for region := range endpoints.AwsPartition().Regions() {
+			regions = append(regions, region)
+		}
+	} else {
+		regions = strings.Split(regs, ",")
 	}
 
-	regions := strings.Split(regs, ",")
 	sess, err := session.NewSessionWithOptions(session.Options{
 		Profile: profile,
 	})
