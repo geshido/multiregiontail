@@ -23,10 +23,12 @@ type LogItem struct {
 func main() {
 	var regs, profile, logGroup, filter string
 	var rlimit int
+	var since string
 	flag.StringVar(&regs, "regs", "", "regs, comma separated")
 	flag.StringVar(&profile, "profile", "default", "AWS profile to use for credentials")
 	flag.StringVar(&logGroup, "group", "", "log group name")
 	flag.StringVar(&filter, "filter", "", "filter events as described at https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html")
+	flag.StringVar(&since, "since", "", "YYYY-MM-DDTHH:MM:SS version of initial point from which log events will be retrieved")
 	flag.IntVar(&rlimit, "rlimit", 0, "if provided, log items will be printed each <rlimit> ms")
 	flag.Parse()
 
@@ -55,12 +57,21 @@ func main() {
 	wg := sync.WaitGroup{}
 	wg.Add(len(regions))
 
+	var startTime time.Time
+	if since != "" {
+		startTime, err = time.Parse(time.RFC3339, since)
+		if err != nil {
+			log.Fatalf("invalid time format. expected time.RFC3339: %v", err)
+		}
+	} else {
+		startTime = time.Now()
+	}
+
 	for _, region := range regions {
 		go func(reg string) {
 			defer wg.Done()
 			cw := cloudwatchlogs.New(sess, aws.NewConfig().WithRegion(reg))
 
-			startTime := time.Now()
 			var seenIds []string
 			for {
 				input := cloudwatchlogs.FilterLogEventsInput{

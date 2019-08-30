@@ -13,6 +13,8 @@ Run
 
 ```
 Usage of multiregiontail:
+  -filter string
+    	filter events as described at https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html
   -group string
     	log group name
   -profile string
@@ -20,5 +22,8 @@ Usage of multiregiontail:
   -regs string
     	regs, comma separated
   -rlimit int
-    	if provided, log items will be printed each <rlimit> seconds
-``` 
+    	if provided, log items will be printed each <rlimit> ms
+  -since string
+    	YYYY-MM-DDTHH:MM:SS version of initial point from which log events will be retrieved
+
+```
