@@ -8,6 +8,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"strings"
 	"sync"
@@ -24,13 +26,21 @@ func main() {
 	var regs, profile, logGroup, filter string
 	var rlimit int
 	var since string
+	var debug bool
 	flag.StringVar(&regs, "regs", "", "regs, comma separated")
 	flag.StringVar(&profile, "profile", "default", "AWS profile to use for credentials")
 	flag.StringVar(&logGroup, "group", "", "log group name")
 	flag.StringVar(&filter, "filter", "", "filter events as described at https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html")
 	flag.StringVar(&since, "since", "", "YYYY-MM-DDTHH:MM:SS version of initial point from which log events will be retrieved")
 	flag.IntVar(&rlimit, "rlimit", 0, "if provided, log items will be printed each <rlimit> ms")
+	flag.BoolVar(&debug, "debug", false, "if provided, profiler will be launched on localhost:6060")
 	flag.Parse()
+
+	if debug {
+		go func() {
+			log.Println(http.ListenAndServe("localhost:6060", nil))
+		}()
+	}
 
 	if logGroup == "" {
 		flag.Usage()

@@ -13,6 +13,8 @@ Run
 
 ```
 Usage of multiregiontail:
+  -debug
+    	if provided, profiler will be launched on localhost:6060
   -filter string
     	filter events as described at https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html
   -group string
@@ -25,5 +27,4 @@ Usage of multiregiontail:
     	if provided, log items will be printed each <rlimit> ms
   -since string
     	YYYY-MM-DDTHH:MM:SS version of initial point from which log events will be retrieved
-
 ```
