@@ -129,14 +129,20 @@ func main() {
 	go func() {
 		if rlimit > 0 {
 			ticker := time.Tick(time.Duration(rlimit) * time.Millisecond)
+			var items []LogItem
 
 			for {
 				select {
+				case item, ok := <- logs:
+					if ok {
+						items = append(items, item)
+					}
+
 				case <-ticker:
-					select {
-					case item := <-logs:
+					for _, item := range items {
 						logItem(item)
 					}
+					items = items[:0]
 				case <-done:
 					return
 				}
