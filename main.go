@@ -24,7 +24,6 @@ type LogItem struct {
 
 func main() {
 	var regs, profile, logGroup, filter string
-	var rlimit int
 	var since string
 	var debug bool
 	flag.StringVar(&regs, "regs", "", "regs, comma separated")
@@ -32,7 +31,6 @@ func main() {
 	flag.StringVar(&logGroup, "group", "", "log group name")
 	flag.StringVar(&filter, "filter", "", "filter events as described at https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html")
 	flag.StringVar(&since, "since", "", "YYYY-MM-DDTHH:MM:SS version of initial point from which log events will be retrieved")
-	flag.IntVar(&rlimit, "rlimit", 0, "if provided, log items will be printed each <rlimit> ms")
 	flag.BoolVar(&debug, "debug", false, "if provided, profiler will be launched on localhost:6060")
 	flag.Parse()
 
@@ -137,32 +135,9 @@ func main() {
 
 	done := make(chan struct{})
 	go func() {
-		if rlimit > 0 {
-			ticker := time.Tick(time.Duration(rlimit) * time.Millisecond)
-			var items []LogItem
-
-			for {
-				select {
-				case item, ok := <- logs:
-					if ok {
-						items = append(items, item)
-					}
-
-				case <-ticker:
-					for _, item := range items {
-						logItem(item)
-					}
-					items = items[:0]
-				case <-done:
-					return
-				}
-			}
-		} else {
-			for item := range logs {
-				logItem(item)
-			}
+		for item := range logs {
+			logItem(item)
 		}
-
 	}()
 
 	wg.Wait()

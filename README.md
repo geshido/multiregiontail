@@ -23,8 +23,6 @@ Usage of multiregiontail:
     	AWS profile to use for credentials (default "default")
   -regs string
     	regs, comma separated
-  -rlimit int
-    	if provided, log items will be printed each <rlimit> ms
   -since string
     	YYYY-MM-DDTHH:MM:SS version of initial point from which log events will be retrieved
 ```
