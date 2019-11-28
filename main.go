@@ -92,9 +92,7 @@ func main() {
 
 				var events []*cloudwatchlogs.FilteredLogEvent
 				err := cw.FilterLogEventsPages(&input, func(out *cloudwatchlogs.FilterLogEventsOutput, lastPage bool) bool {
-					for _, e := range out.Events {
-						events = append(events, e)
-					}
+					events = append(events, out.Events...)
 					return true
 				})
 				if err != nil {
